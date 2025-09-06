@@ -1,19 +1,13 @@
 import { Document, Types } from 'mongoose';
+import { UserRole } from '../enums/user-role.enum';
 
 export interface IUserDocument extends Document {
   _id: Types.ObjectId;
-  username?: string;
+  username: string;
   email: string;
   passwordHash: string;
-  displayName?: string;
-  role: string;
+  role: UserRole;
   language?: string;
-  enabled: boolean;
-  blocked: boolean;
-  deleted: boolean;
-  deletedAt?: Date;
-  displayNameUpdated?: Date;
-  rating?: number;
   createdAt: Date;
   updatedAt: Date;
 }

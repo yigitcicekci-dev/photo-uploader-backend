@@ -1,0 +1,27 @@
+{
+  "common": {
+    "INTERNAL_SERVER_ERROR": "An unexpected error occurred. Please try again later.",
+    "BAD_REQUEST": "Invalid request data provided.",
+    "UNAUTHORIZED": "You are not authorized to access this resource."
+  },
+  "authentication": {
+    "USER_ALREADY_EXISTS": "A user with this email already exists.",
+    "USERNAME_ALREADY_EXISTS": "Username is already taken.",
+    "INVALID_CREDENTIALS": "Invalid email or password.",
+    "WEAK_PASSWORD": "Password must be at least 8 characters long and contain at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    "INVALID_TOKEN": "Invalid or expired token.",
+    "ACCESS_TOKEN_EXPIRED": "Access token has expired. Please refresh your token.",
+    "INVALID_REFRESH_TOKEN": "Invalid refresh token. Please login again.",
+    "REGISTRATION_FAILED": "Registration failed. Please try again.",
+    "LOGIN_FAILED": "Login failed. Please check your credentials."
+  },
+  "user": {
+    "USER_NOT_FOUND": "User not found."
+  },
+  "media": {
+    "MEDIA_NOT_FOUND": "Media file not found.",
+    "ACCESS_DENIED": "You don't have permission to access this media.",
+    "PERMISSION_DENIED": "Permission denied for this operation.",
+    "FILE_NOT_FOUND_ON_DISK": "File not found on server."
+  }
+}

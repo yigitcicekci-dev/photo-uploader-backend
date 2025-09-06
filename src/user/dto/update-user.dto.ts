@@ -4,9 +4,10 @@ import {
   IsOptional,
   MinLength,
   MaxLength,
-  IsBoolean,
+  IsEnum,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 export class UpdateUserDto {
   @ApiProperty({ example: 'johndoe', required: false })
@@ -21,13 +22,6 @@ export class UpdateUserDto {
   @IsOptional()
   email?: string;
 
-  @ApiProperty({ example: 'John Doe', required: false })
-  @IsString()
-  @IsOptional()
-  @MinLength(3)
-  @MaxLength(64)
-  displayName?: string;
-
   @ApiProperty({ example: 'Passw0rd!', required: false })
   @IsString()
   @MinLength(6)
@@ -35,29 +29,10 @@ export class UpdateUserDto {
   @IsOptional()
   password?: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ example: UserRole.USER, enum: UserRole, required: false })
   @IsOptional()
-  @IsBoolean()
-  deleted?: boolean;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  deletedAt?: Date;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean;
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsBoolean()
-  blocked?: boolean;
-
-  @ApiProperty({ example: 'user', enum: ['user', 'admin'], required: false })
-  @IsOptional()
-  @IsString()
-  role?: string;
+  @IsEnum(UserRole, { message: 'Role must be either user or admin' })
+  role?: UserRole;
 }
 
 export class UpdateMeUserDto {
@@ -68,13 +43,6 @@ export class UpdateMeUserDto {
   @MaxLength(32)
   username?: string;
 
-  @ApiProperty({ example: 'John Doe', required: false })
-  @IsString()
-  @IsOptional()
-  @MinLength(3)
-  @MaxLength(64)
-  displayName?: string;
-
   @ApiProperty({
     required: false,
     description: 'Language code (e.g., "en", "tr", "en_US")',
@@ -83,11 +51,4 @@ export class UpdateMeUserDto {
   @IsOptional()
   @IsString()
   language?: string;
-
-  @ApiProperty({
-    required: false,
-    description: 'Display name last updated',
-  })
-  @IsOptional()
-  displayNameUpdated?: Date;
 }

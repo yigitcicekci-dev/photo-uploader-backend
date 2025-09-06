@@ -30,7 +30,7 @@ export class TokenService {
     this.ensureJwtSecret();
     this.accessTokenExpiry = this.getConfigValue(
       'jwt.accessTokenExpiration',
-      '15m',
+      '1h',
     );
     this.refreshTokenExpiry = this.getConfigValue(
       'jwt.refreshTokenExpiration',
@@ -75,16 +75,19 @@ export class TokenService {
 
     return this.jwtService.sign(tokenPayload, {
       expiresIn: this.refreshTokenExpiry,
-      secret: this.getJwtSecret(),
+      secret: this.getJwtRefreshSecret(),
     });
   }
 
   verifyToken(token: string, isRefreshToken = false): TokenPayload {
     const expectedSub = isRefreshToken ? 'REFRESH_TOKEN' : 'ACCESS_TOKEN';
+    const secret = isRefreshToken
+      ? this.getJwtRefreshSecret()
+      : this.getJwtSecret();
 
     try {
       const payload = this.jwtService.verify<TokenPayload>(token, {
-        secret: this.getJwtSecret(),
+        secret,
       });
 
       if (payload.sub !== expectedSub) {
@@ -104,11 +107,12 @@ export class TokenService {
 
   private calculateExpiration(expiry: string): Date {
     const now = Date.now();
-    const match = expiry.match(/^(\d+)([md])$/);
+    const match = expiry.match(/^(\d+)([mhd])$/);
     if (match) {
       const value = parseInt(match[1], 10);
       const unit = match[2];
       if (unit === 'm') return new Date(now + value * 60 * 1000);
+      if (unit === 'h') return new Date(now + value * 60 * 60 * 1000);
       if (unit === 'd') return new Date(now + value * 24 * 60 * 60 * 1000);
     }
 
@@ -129,8 +133,20 @@ export class TokenService {
     return secret;
   }
 
+  private getJwtRefreshSecret(): string {
+    const secret = this.configService.get<string>('jwt.refreshSecret');
+    if (!secret) {
+      this.logger.error(
+        'JWT_REFRESH_SECRET is not configured in environment variables',
+      );
+      throw new Error('JWT_REFRESH_SECRET is not configured');
+    }
+    return secret;
+  }
+
   private ensureJwtSecret(): void {
     this.getJwtSecret();
+    this.getJwtRefreshSecret();
   }
 
   private getConfigValue(key: string, defaultValue: string): string {

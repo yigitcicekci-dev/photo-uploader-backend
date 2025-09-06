@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_GUARD, APP_FILTER } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
+import {
+  I18nModule,
+  AcceptLanguageResolver,
+  HeaderResolver,
+} from 'nestjs-i18n';
+import * as path from 'path';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthenticationModule } from './authentication/authentication.module';
@@ -10,6 +16,7 @@ import { UserModule } from './user/user.module';
 import { MediaModule } from './media/media.module';
 import { HealthModule } from './health/health.module';
 import { HeaderValidationGuard } from './common/guards/header-validation.guard';
+import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 import configuration from './common/config/configuration';
 
 @Module({
@@ -33,6 +40,25 @@ import configuration from './common/config/configuration';
       inject: [ConfigService],
       global: true,
     }),
+    I18nModule.forRootAsync({
+      useFactory: () => {
+        const isDevelopment = process.env.NODE_ENV !== 'production';
+        const i18nPath = isDevelopment
+          ? path.join(__dirname, '../src/i18n/')
+          : path.join(__dirname, './i18n/');
+        return {
+          fallbackLanguage: 'en',
+          loaderOptions: {
+            path: i18nPath,
+            watch: isDevelopment,
+          },
+          resolvers: [
+            new HeaderResolver(['accept-language']),
+            AcceptLanguageResolver,
+          ],
+        };
+      },
+    }),
     AuthenticationModule,
     UserModule,
     MediaModule,
@@ -44,6 +70,10 @@ import configuration from './common/config/configuration';
     {
       provide: APP_GUARD,
       useClass: HeaderValidationGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: AllExceptionsFilter,
     },
   ],
 })

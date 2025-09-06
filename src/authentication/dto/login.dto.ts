@@ -1,4 +1,4 @@
-import { IsEmail, IsString, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class LoginDto {
@@ -17,4 +17,13 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty({ message: 'Password is required' })
   password: string;
+
+  @ApiProperty({
+    example: 'device-uuid-123',
+    description: 'Device identifier for session management',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  deviceId?: string;
 }

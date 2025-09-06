@@ -21,8 +21,10 @@ export class MediaRepository {
   async findByOwnerId(
     ownerId: string | Types.ObjectId,
   ): Promise<MediaDocument[]> {
+    const objectId =
+      typeof ownerId === 'string' ? new Types.ObjectId(ownerId) : ownerId;
     return this.mediaModel
-      .find({ ownerId })
+      .find({ ownerId: objectId })
       .populate('ownerId', 'email')
       .exec();
   }
@@ -30,9 +32,11 @@ export class MediaRepository {
   async findAccessibleByUserId(
     userId: string | Types.ObjectId,
   ): Promise<MediaDocument[]> {
+    const objectId =
+      typeof userId === 'string' ? new Types.ObjectId(userId) : userId;
     return this.mediaModel
       .find({
-        $or: [{ ownerId: userId }, { allowedUserIds: { $in: [userId] } }],
+        $or: [{ ownerId: objectId }, { allowedUserIds: { $in: [objectId] } }],
       })
       .populate('ownerId', 'email')
       .exec();
@@ -78,5 +82,11 @@ export class MediaRepository {
       )
       .populate('ownerId', 'email')
       .exec();
+  }
+
+  async delete(
+    mediaId: string | Types.ObjectId,
+  ): Promise<MediaDocument | null> {
+    return this.mediaModel.findByIdAndDelete(mediaId).exec();
   }
 }

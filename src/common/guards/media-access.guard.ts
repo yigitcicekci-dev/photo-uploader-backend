@@ -1,11 +1,12 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { MediaRepository } from '../../media/repositories/media.repository';
 import { AppException } from '../exceptions/app.exception';
+import { UserRole } from '../enums/user-role.enum';
 
 interface AuthenticatedUser {
   userId: string;
   email: string;
-  role: string;
+  role: UserRole;
 }
 
 interface RequestWithUserAndParams {
@@ -33,11 +34,12 @@ export class MediaAccessGuard implements CanActivate {
       throw new AppException('MEDIA_NOT_FOUND');
     }
 
+    const isAdmin = user.role === UserRole.ADMIN;
     const hasAccess =
       media.ownerId.toString() === user.userId ||
       media.allowedUserIds.some((id) => id.toString() === user.userId);
 
-    if (!hasAccess) {
+    if (!isAdmin && !hasAccess) {
       throw new AppException('ACCESS_DENIED');
     }
 

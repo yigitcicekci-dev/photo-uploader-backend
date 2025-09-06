@@ -10,27 +10,42 @@ A professional REST API for photo uploading with authentication, authorization, 
 - **File Storage**: Local file system storage with configurable upload directory
 - **API Documentation**: Comprehensive Swagger/OpenAPI documentation
 - **Database**: MongoDB Atlas integration with Mongoose ODM
+- **Internationalization**: Multi-language support (Turkish/English) with automatic error message translation
+- **User Roles**: Enum-based user role system (USER/ADMIN)
 
 ## Tech Stack
 
 - **Framework**: NestJS
 - **Database**: MongoDB Atlas with Mongoose
-- **Authentication**: JWT (Access + Refresh tokens)
+- **Authentication**: JWT (Access + Refresh tokens) with separate secrets
 - **File Upload**: Multer
 - **Documentation**: Swagger/OpenAPI
 - **Validation**: class-validator, class-transformer
+- **Internationalization**: nestjs-i18n with Turkish/English support
 
 ## Environment Variables
 
 Create a `.env` file in the root directory:
 
 ```env
+# Database Configuration
 MONGO_URI=mongodb+srv://<user>:<pass>@<cluster>/<db>
-JWT_ACCESS_SECRET=your-super-secret-access-key-change-this-in-production
-JWT_REFRESH_SECRET=your-super-secret-refresh-key-change-this-in-production
+
+# JWT Configuration - Generate secure secrets using: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_ACCESS_SECRET=your_jwt_access_secret_here_minimum_64_characters_long
+JWT_REFRESH_SECRET=your_jwt_refresh_secret_here_minimum_64_characters_long
+
+# JWT Token Expiry Times
+JWT_ACCESS_TOKEN_EXPIRY=15m
+JWT_REFRESH_TOKEN_EXPIRY=7d
+
+# File Upload Configuration
 UPLOAD_DIR=./uploads
 MAX_FILE_SIZE=5242880
+
+# Server Configuration
 PORT=3000
+NODE_ENV=development
 ```
 
 ## Installation
@@ -38,6 +53,10 @@ PORT=3000
 ```bash
 # Install dependencies
 npm install
+
+# Generate JWT secrets (copy output to .env file)
+node -e "console.log('JWT_ACCESS_SECRET=' + require('crypto').randomBytes(64).toString('hex'))"
+node -e "console.log('JWT_REFRESH_SECRET=' + require('crypto').randomBytes(64).toString('hex'))"
 
 # Start development server
 npm run start:dev

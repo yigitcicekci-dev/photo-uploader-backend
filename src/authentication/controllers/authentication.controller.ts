@@ -5,7 +5,6 @@ import {
   HttpCode,
   HttpStatus,
   UseGuards,
-  Get,
   Request,
 } from '@nestjs/common';
 import {
@@ -13,6 +12,8 @@ import {
   ApiOperation,
   ApiResponse,
   ApiBearerAuth,
+  ApiSecurity,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { AuthenticationService } from '../services/authentication.service';
 import { RegisterDto } from '../dto/register.dto';
@@ -23,6 +24,18 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import * as currentUserDecorator from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Authentication')
+@ApiSecurity('device-id')
+@ApiSecurity('accept-language')
+@ApiHeader({
+  name: 'device-id',
+  description: 'Unique device identifier (UUID recommended)',
+  required: true,
+})
+@ApiHeader({
+  name: 'accept-language',
+  description: 'Language preference (tr or en)',
+  required: true,
+})
 @Controller('auth')
 export class AuthenticationController {
   constructor(private authenticationService: AuthenticationService) {}
@@ -98,8 +111,24 @@ export class AuthenticationController {
       },
     },
   })
-  async login(@Body() loginDto: LoginDto): Promise<AuthResponse> {
-    return this.authenticationService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Request()
+    req: {
+      headers: Record<string, string | string[] | undefined>;
+      ip?: string;
+      connection?: { remoteAddress?: string };
+    },
+  ): Promise<AuthResponse> {
+    const deviceId = req.headers['device-id'] as string;
+    const userAgent = req.headers['user-agent'] as string;
+    const ipAddress = req.ip || req.connection?.remoteAddress;
+    return this.authenticationService.login(
+      loginDto,
+      deviceId,
+      userAgent,
+      ipAddress,
+    );
   }
 
   @Post('refresh')
@@ -141,39 +170,64 @@ export class AuthenticationController {
     return this.authenticationService.refresh(refreshTokenDto.refreshToken);
   }
 
-  @Get('me')
+  @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Get current user profile',
-    description: 'Get authenticated user information',
+    summary: 'Logout user',
+    description: 'Invalidate current session and logout user',
   })
   @ApiResponse({
     status: 200,
-    description: 'User profile retrieved successfully',
+    description: 'Logout successful',
     schema: {
       example: {
-        id: '60f1b2b3b3b3b3b3b3b3b3b3',
-        email: 'user@example.com',
-        role: 'user',
+        message: 'Logged out successfully',
       },
     },
   })
   @ApiResponse({
     status: 401,
     description: 'Unauthorized - Invalid or missing token',
+  })
+  async logout(
+    @Request() req: { headers: Record<string, string | string[] | undefined> },
+  ): Promise<{ message: string }> {
+    const authHeader = req.headers.authorization as string;
+    const token = authHeader?.split(' ')[1];
+    if (token) {
+      await this.authenticationService.logout(token);
+    }
+    return { message: 'Logged out successfully' };
+  }
+
+  @Post('logout-all')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Logout from all devices',
+    description: 'Invalidate all sessions for the current user',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All sessions invalidated successfully',
     schema: {
       example: {
-        statusCode: 401,
-        message: 'Unauthorized',
-        error: 'Unauthorized',
+        message: 'All sessions invalidated successfully',
       },
     },
   })
-  getProfile(
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  async logoutAll(
     @currentUserDecorator.CurrentUser()
     user: currentUserDecorator.AuthenticatedUser,
-  ) {
-    return this.authenticationService.getMyProfileData(user);
+  ): Promise<{ message: string }> {
+    await this.authenticationService.logoutAllSessions(user.userId);
+    return { message: 'All sessions invalidated successfully' };
   }
 }

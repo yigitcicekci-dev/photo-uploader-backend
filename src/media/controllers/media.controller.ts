@@ -19,16 +19,30 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiConsumes,
+  ApiSecurity,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { MediaService } from '../services/media.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MediaAccessGuard } from '../../common/guards/media-access.guard';
 import * as currentUserDecorator from '../../common/decorators/current-user.decorator';
-import { PermissionDto } from '../dto/permission.dto';
+import { MediaPermissionDto } from '../dto/media-permission.dto';
 import { multerConfig } from '../../common/interceptors/file-validation.interceptor';
 import { createReadStream } from 'fs';
 
 @ApiTags('Media')
+@ApiSecurity('device-id')
+@ApiSecurity('accept-language')
+@ApiHeader({
+  name: 'device-id',
+  description: 'Unique device identifier (UUID recommended)',
+  required: true,
+})
+@ApiHeader({
+  name: 'accept-language',
+  description: 'Language preference (tr or en)',
+  required: true,
+})
 @Controller('media')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
@@ -148,7 +162,7 @@ export class MediaController {
   @ApiResponse({ status: 404, description: 'Media not found' })
   async managePermissions(
     @Param('id') id: string,
-    @Body() permissionDto: PermissionDto,
+    @Body() permissionDto: MediaPermissionDto,
     @currentUserDecorator.CurrentUser()
     user: currentUserDecorator.AuthenticatedUser,
   ) {

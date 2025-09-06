@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Expose } from 'class-transformer';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 export class UserResponse {
   @ApiProperty({ example: '60f1b2b3b3b3b3b3b3b3b3b3' })
@@ -10,9 +11,9 @@ export class UserResponse {
   @Expose()
   email: string;
 
-  @ApiProperty({ example: 'user', enum: ['user', 'admin'] })
+  @ApiProperty({ example: UserRole.USER, enum: UserRole })
   @Expose()
-  role: string;
+  role: UserRole;
 
   @ApiProperty({ example: '2023-01-01T00:00:00.000Z' })
   @Expose()

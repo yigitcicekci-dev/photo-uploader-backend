@@ -1,0 +1,27 @@
+{
+  "common": {
+    "INTERNAL_SERVER_ERROR": "Beklenmeyen bir hata oluştu. Lütfen daha sonra tekrar deneyin.",
+    "BAD_REQUEST": "Geçersiz istek verisi sağlandı.",
+    "UNAUTHORIZED": "Bu kaynağa erişim yetkiniz bulunmamaktadır."
+  },
+  "authentication": {
+    "USER_ALREADY_EXISTS": "Bu e-posta adresi ile kayıtlı bir kullanıcı zaten mevcut.",
+    "USERNAME_ALREADY_EXISTS": "Bu kullanıcı adı zaten alınmış.",
+    "INVALID_CREDENTIALS": "Geçersiz e-posta veya şifre.",
+    "WEAK_PASSWORD": "Şifre en az 8 karakter uzunluğunda olmalı ve en az bir büyük harf, bir küçük harf, bir rakam ve bir özel karakter içermelidir.",
+    "INVALID_TOKEN": "Geçersiz veya süresi dolmuş token.",
+    "ACCESS_TOKEN_EXPIRED": "Erişim token'ının süresi dolmuş. Lütfen token'ınızı yenileyin.",
+    "INVALID_REFRESH_TOKEN": "Geçersiz yenileme token'ı. Lütfen tekrar giriş yapın.",
+    "REGISTRATION_FAILED": "Kayıt işlemi başarısız oldu. Lütfen tekrar deneyin.",
+    "LOGIN_FAILED": "Giriş başarısız oldu. Lütfen bilgilerinizi kontrol edin."
+  },
+  "user": {
+    "USER_NOT_FOUND": "Kullanıcı bulunamadı."
+  },
+  "media": {
+    "MEDIA_NOT_FOUND": "Medya dosyası bulunamadı.",
+    "ACCESS_DENIED": "Bu medyaya erişim izniniz bulunmamaktadır.",
+    "PERMISSION_DENIED": "Bu işlem için izniniz bulunmamaktadır.",
+    "FILE_NOT_FOUND_ON_DISK": "Dosya sunucuda bulunamadı."
+  }
+}

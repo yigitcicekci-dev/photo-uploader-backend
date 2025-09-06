@@ -1,4 +1,4 @@
-import { Controller, Put, Body, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Put, Body, UseGuards, Logger, Get } from '@nestjs/common';
 import { UserService } from '../services/user.service';
 import * as currentUserDecorator from '../../common/decorators/current-user.decorator';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -9,9 +9,24 @@ import {
   ApiOperation,
   ApiTags,
   ApiResponse,
+  ApiSecurity,
+  ApiHeader,
 } from '@nestjs/swagger';
+import { IUserDocument } from 'src/common/interfaces/user-document.interface';
 
 @ApiTags('User')
+@ApiSecurity('device-id')
+@ApiSecurity('accept-language')
+@ApiHeader({
+  name: 'device-id',
+  description: 'Unique device identifier (UUID recommended)',
+  required: true,
+})
+@ApiHeader({
+  name: 'accept-language',
+  description: 'Language preference (tr or en)',
+  required: true,
+})
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('user')
@@ -22,9 +37,8 @@ export class UserController {
 
   @Put('me')
   @ApiOperation({
-    summary: 'Update current user profile (username, displayName, language)',
-    description:
-      'Update user profile information. Display name can only be updated once every 30 days.',
+    summary: 'Update current user profile (username, language)',
+    description: 'Update user profile information.',
   })
   @ApiBody({ type: UpdateMeUserDto })
   @ApiResponse({
@@ -54,10 +68,6 @@ export class UserController {
     status: 409,
     description: 'Username already exists',
   })
-  @ApiResponse({
-    status: 429,
-    description: 'Display name updated too recently',
-  })
   async updateMe(
     @currentUserDecorator.CurrentUser()
     user: currentUserDecorator.AuthenticatedUser,
@@ -65,5 +75,41 @@ export class UserController {
   ): Promise<{ success: boolean }> {
     const result = await this.userService.updateUser(user.userId, payload);
     return { success: result };
+  }
+
+  @Get('me')
+  @ApiOperation({
+    summary: 'Get current user profile',
+    description: 'Retrieve the current authenticated user profile information',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User profile retrieved successfully',
+    schema: {
+      example: {
+        id: '60f1b2b3b3b3b3b3b3b3b3b3',
+        username: 'johndoe',
+        email: 'user@example.com',
+        role: 'user',
+        createdAt: '2025-09-06T12:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or missing token',
+  })
+  async getProfile(
+    @currentUserDecorator.CurrentUser()
+    user: currentUserDecorator.AuthenticatedUser,
+  ) {
+    const userProfile = await this.userService.getUserById(user.userId);
+    return {
+      id: userProfile._id,
+      username: userProfile.username,
+      email: userProfile.email,
+      role: userProfile.role,
+      createdAt: (userProfile as IUserDocument).createdAt,
+    };
   }
 }

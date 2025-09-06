@@ -6,7 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { AppLanguages, AppLanguageConvert, OsType } from '../types/core.types';
+import { AppLanguages, AppLanguageConvert } from '../types/core.types';
 import { SKIP_HEADER_VALIDATION_KEY } from '../decorators/skip-header-validation.decorator';
 import { HEADER_VALIDATION_GUARD_CUSTOM_EXCLUDED_ROUTES } from '../config/route.config';
 
@@ -15,31 +15,21 @@ interface RequestWithRoute {
     path: string;
   };
   headers: {
-    os?: string;
-    model?: string;
-    version?: string;
     'device-id'?: string;
     'accept-language'?: string;
+    authorization?: string;
     [key: string]: string | string[] | undefined;
   };
 }
 
 @Injectable()
 export class HeaderValidationGuard implements CanActivate {
-  private static readonly ALLOWED_OS = [OsType.ANDROID, OsType.IOS, OsType.WEB];
-
   private static readonly ALLOWED_LANGUAGES = [
     AppLanguages.English,
     AppLanguages.Turkish,
   ];
 
-  private static readonly REQUIRED_HEADERS = [
-    'os',
-    'model',
-    'version',
-    'device-id',
-    'accept-language',
-  ];
+  private static readonly REQUIRED_HEADERS = ['device-id', 'accept-language'];
 
   private readonly logger = new Logger('HEADER_VALIDATION_GUARD');
 
@@ -77,17 +67,9 @@ export class HeaderValidationGuard implements CanActivate {
     if (missing.length)
       this.fail(`Missing required headers: ${missing.join(', ')}`);
 
-    const os = headers.os;
-    if (!HeaderValidationGuard.ALLOWED_OS.includes(os as OsType))
-      this.fail(`Invalid os header: received '${os}'`);
-
     const deviceId = headers['device-id'];
     if (typeof deviceId !== 'string' || !deviceId.trim())
       this.fail(`Invalid device-id header: received '${deviceId}'`);
-
-    const model = headers.model;
-    if (typeof model !== 'string' || !model.trim())
-      this.fail(`Invalid model header: received '${model}'`);
 
     const lang = headers['accept-language'];
     if (typeof lang !== 'string') {
@@ -101,10 +83,6 @@ export class HeaderValidationGuard implements CanActivate {
       this.fail(`Invalid accept-language header: received '${lang}'`);
     }
     request.headers['accept-language'] = parsedLang;
-
-    const version = headers.version;
-    if (typeof version !== 'string' || !version.trim())
-      this.fail(`Invalid version header: received '${version}'`);
 
     return true;
   }

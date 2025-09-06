@@ -5,12 +5,10 @@ import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateMeUserDto } from '../dto/update-user.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { UserErrors } from '../../common/errors/user.errors';
-import { AuthenticationErrors } from '../../common/errors/authentication.errors';
 import { IUserDocument } from '../../common/interfaces/user-document.interface';
 import {
-  mapToLanguageEnum,
-  getNextDisplayNameUpdateDate,
   generateUniqueUsername,
+  mapToLanguageEnum,
 } from '../../common/utils/helper.utils';
 import { Types } from 'mongoose';
 
@@ -62,18 +60,6 @@ export class UserService {
       throw new AppException(UserErrors.USER_NOT_FOUND.code);
     }
 
-    if (user.deleted) {
-      throw new AppException(AuthenticationErrors.ACCOUNT_DELETED.code);
-    }
-
-    if (user.blocked) {
-      throw new AppException(AuthenticationErrors.ACCOUNT_BLOCKED.code);
-    }
-
-    if (!user.enabled) {
-      throw new AppException(AuthenticationErrors.ACCOUNT_INACTIVE.code);
-    }
-
     return user;
   }
 
@@ -81,25 +67,6 @@ export class UserService {
     id: string | Types.ObjectId,
     data: UpdateMeUserDto,
   ): Promise<boolean> {
-    if (data.displayName) {
-      const user = await this.userRepository.findById(id);
-      if (!user) {
-        throw new AppException(UserErrors.USER_NOT_FOUND.code);
-      }
-
-      if (user.displayNameUpdated) {
-        const thirtyDays = new Date();
-        thirtyDays.setDate(thirtyDays.getDate() - 30);
-
-        if (user.displayNameUpdated > thirtyDays) {
-          throw new AppException(
-            UserErrors.DISPLAY_NAME_UPDATED.code,
-            getNextDisplayNameUpdateDate(user.displayNameUpdated),
-          );
-        }
-      }
-    }
-
     if (data.username) {
       const existingUsername = await this.userRepository.findByUsername(
         data.username,
@@ -115,10 +82,6 @@ export class UserService {
     const updateData = { ...data };
     if (updateData.language) {
       updateData.language = mapToLanguageEnum(updateData.language);
-    }
-
-    if (updateData.displayName) {
-      updateData.displayNameUpdated = new Date();
     }
 
     await this.userRepository.update(id, updateData);
@@ -137,20 +100,6 @@ export class UserService {
       throw new AppException(UserErrors.USER_NOT_FOUND.code);
     }
     return deletedUser;
-  }
-
-  async softDeleteUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userRepository.softDeleteUser(userId);
-  }
-
-  async reactivateUser(
-    user: Pick<UserDocument, '_id' | 'deleted'>,
-  ): Promise<void> {
-    if (!user) {
-      throw new AppException(UserErrors.USER_NOT_FOUND.code);
-    }
-    if (!user.deleted) return;
-    await this.userRepository.reactivateUser((user as IUserDocument)._id);
   }
 
   async existsByEmail(email: string): Promise<boolean> {
@@ -187,31 +136,7 @@ export class UserService {
     return this.userRepository.findAll();
   }
 
-  async findActiveUsers(): Promise<UserDocument[]> {
-    return this.userRepository.findActiveUsers();
-  }
-
   async getUsersCount(): Promise<number> {
     return this.userRepository.getUsersCount();
-  }
-
-  async blockUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.getUserById(userId);
-    await this.userRepository.blockUser(userId);
-  }
-
-  async unblockUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.getUserById(userId);
-    await this.userRepository.unblockUser(userId);
-  }
-
-  async disableUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.getUserById(userId);
-    await this.userRepository.disableUser(userId);
-  }
-
-  async enableUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.getUserById(userId);
-    await this.userRepository.enableUser(userId);
   }
 }

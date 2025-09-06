@@ -3,12 +3,16 @@ import { AppException } from '../../common/exceptions/app.exception';
 import { ConfigService } from '@nestjs/config';
 import { MediaRepository } from '../repositories/media.repository';
 import { UserRepository } from '../../user/repositories/user.repository';
-import { PermissionDto } from '../dto/permission.dto';
+import {
+  MediaPermissionDto,
+  PermissionAction,
+} from '../dto/media-permission.dto';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Types } from 'mongoose';
 import { IMediaDocument } from '../interfaces/media-document.interface';
 import { IUserDocument } from 'src/common/interfaces/user-document.interface';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Injectable()
 export class MediaService {
@@ -66,11 +70,18 @@ export class MediaService {
       throw new AppException('MEDIA_NOT_FOUND');
     }
 
-    const hasAccess =
-      media.ownerId.toString() === userId ||
-      media.allowedUserIds.some((id) => id.toString() === userId);
+    const currentUser = await this.userRepository.findById(userId);
+    if (!currentUser) {
+      throw new AppException('USER_NOT_FOUND');
+    }
 
-    if (!hasAccess) {
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const userIdObjectId = new Types.ObjectId(userId);
+    const hasAccess =
+      media.ownerId.equals(userIdObjectId) ||
+      media.allowedUserIds.some((id) => id.equals(userIdObjectId));
+
+    if (!isAdmin && !hasAccess) {
       throw new AppException('ACCESS_DENIED');
     }
 
@@ -91,9 +102,10 @@ export class MediaService {
       throw new AppException('MEDIA_NOT_FOUND');
     }
 
+    const userIdObjectId = new Types.ObjectId(userId);
     const hasAccess =
-      media.ownerId.toString() === userId ||
-      media.allowedUserIds.some((id) => id.toString() === userId);
+      media.ownerId.equals(userIdObjectId) ||
+      media.allowedUserIds.some((id) => id.equals(userIdObjectId));
 
     if (!hasAccess) {
       throw new AppException('ACCESS_DENIED');
@@ -116,7 +128,16 @@ export class MediaService {
       throw new AppException('MEDIA_NOT_FOUND');
     }
 
-    if (media.ownerId.toString() !== userId) {
+    const currentUser = await this.userRepository.findById(userId);
+    if (!currentUser) {
+      throw new AppException('USER_NOT_FOUND');
+    }
+
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const userIdObjectId = new Types.ObjectId(userId);
+    const isOwner = media.ownerId.equals(userIdObjectId);
+
+    if (!isAdmin && !isOwner) {
       throw new AppException('PERMISSION_DENIED');
     }
 
@@ -134,7 +155,16 @@ export class MediaService {
       throw new AppException('MEDIA_NOT_FOUND');
     }
 
-    if (media.ownerId.toString() !== userId) {
+    const currentUser = await this.userRepository.findById(userId);
+    if (!currentUser) {
+      throw new AppException('USER_NOT_FOUND');
+    }
+
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const userIdObjectId = new Types.ObjectId(userId);
+    const isOwner = media.ownerId.equals(userIdObjectId);
+
+    if (!isAdmin && !isOwner) {
       throw new AppException('PERMISSION_DENIED');
     }
 
@@ -155,14 +185,23 @@ export class MediaService {
   async managePermissions(
     mediaId: string,
     userId: string,
-    permissionDto: PermissionDto,
+    permissionDto: MediaPermissionDto,
   ) {
     const media = await this.mediaRepository.findById(mediaId);
     if (!media) {
       throw new AppException('MEDIA_NOT_FOUND');
     }
 
-    if (media.ownerId.toString() !== userId) {
+    const currentUser = await this.userRepository.findById(userId);
+    if (!currentUser) {
+      throw new AppException('USER_NOT_FOUND');
+    }
+
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const userIdObjectId = new Types.ObjectId(userId);
+    const isOwner = media.ownerId.equals(userIdObjectId);
+
+    if (!isAdmin && !isOwner) {
       throw new AppException('PERMISSION_DENIED');
     }
 
@@ -171,12 +210,13 @@ export class MediaService {
       throw new AppException('USER_NOT_FOUND');
     }
 
-    if (permissionDto.userId === userId) {
+    const targetUserIdObjectId = new Types.ObjectId(permissionDto.userId);
+    if (userIdObjectId.equals(targetUserIdObjectId)) {
       throw new AppException('BAD_REQUEST');
     }
 
     let updatedMedia;
-    if (permissionDto.action === 'add') {
+    if (permissionDto.action === PermissionAction.ADD) {
       updatedMedia = await this.mediaRepository.addPermission(
         mediaId,
         permissionDto.userId,

@@ -58,24 +58,6 @@ export class UserRepository {
     return this.userModel.findByIdAndDelete(id).exec();
   }
 
-  async softDeleteUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userModel
-      .findByIdAndUpdate(userId, {
-        deleted: true,
-        deletedAt: new Date(),
-      })
-      .exec();
-  }
-
-  async reactivateUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userModel
-      .findByIdAndUpdate(userId, {
-        deleted: false,
-        deletedAt: null,
-      })
-      .exec();
-  }
-
   async existsByEmail(email: string): Promise<boolean> {
     const user = await this.findByEmail(email);
     return !!user;
@@ -86,33 +68,11 @@ export class UserRepository {
     return !!user;
   }
 
-  async findActiveUsers(): Promise<UserDocument[]> {
-    return this.userModel
-      .find({
-        deleted: { $ne: true },
-        blocked: { $ne: true },
-        enabled: true,
-      })
-      .exec();
+  async findAllUsers(): Promise<UserDocument[]> {
+    return this.userModel.find().exec();
   }
 
   async getUsersCount(): Promise<number> {
-    return this.userModel.countDocuments({ deleted: { $ne: true } });
-  }
-
-  async blockUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userModel.findByIdAndUpdate(userId, { blocked: true }).exec();
-  }
-
-  async unblockUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userModel.findByIdAndUpdate(userId, { blocked: false }).exec();
-  }
-
-  async disableUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userModel.findByIdAndUpdate(userId, { enabled: false }).exec();
-  }
-
-  async enableUser(userId: string | Types.ObjectId): Promise<void> {
-    await this.userModel.findByIdAndUpdate(userId, { enabled: true }).exec();
+    return this.userModel.countDocuments();
   }
 }

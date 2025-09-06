@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Types } from 'mongoose';
 import * as bcrypt from 'bcrypt';
 import { UserRepository } from '../../user/repositories/user.repository';
 import { RegisterDto } from '../dto/register.dto';
@@ -10,23 +11,32 @@ import {
 } from '../dto/auth-response.dto';
 import { AppException } from '../../common/exceptions/app.exception';
 import { TokenService } from './token.service';
-import { toDto } from '../../common/utils/helper.utils';
+import { SessionService } from './session.service';
 import { IUserDocument } from '../../common/interfaces/user-document.interface';
+import { UserRole } from '../../common/enums/user-role.enum';
 
 @Injectable()
 export class AuthenticationService {
   constructor(
     private userRepository: UserRepository,
     private tokenService: TokenService,
+    private sessionService: SessionService,
   ) {}
 
   async register(registerDto: RegisterDto): Promise<AuthResponse> {
     try {
-      const existingUser = await this.userRepository.findByEmail(
+      const existingUserByEmail = await this.userRepository.findByEmail(
         registerDto.email,
       );
-      if (existingUser) {
+      if (existingUserByEmail) {
         throw new AppException('USER_ALREADY_EXISTS');
+      }
+
+      const existingUserByUsername = await this.userRepository.findByUsername(
+        registerDto.username,
+      );
+      if (existingUserByUsername) {
+        throw new AppException('USERNAME_ALREADY_EXISTS');
       }
 
       if (!this.isValidPassword(registerDto.password)) {
@@ -35,9 +45,10 @@ export class AuthenticationService {
 
       const passwordHash = await bcrypt.hash(registerDto.password, 12);
       const user = await this.userRepository.create({
+        username: registerDto.username.toLowerCase().trim(),
         email: registerDto.email.toLowerCase().trim(),
         passwordHash,
-        role: registerDto.role || 'user',
+        role: registerDto.role || UserRole.USER,
       });
 
       const tokens = this.tokenService.generateTokens({
@@ -67,7 +78,12 @@ export class AuthenticationService {
     }
   }
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  async login(
+    loginDto: LoginDto,
+    deviceId?: string,
+    userAgent?: string,
+    ipAddress?: string,
+  ): Promise<AuthResponse> {
     try {
       const user = await this.userRepository.findByEmail(
         loginDto.email.toLowerCase().trim(),
@@ -92,6 +108,17 @@ export class AuthenticationService {
         role: user.role,
       });
 
+      if (deviceId) {
+        await this.sessionService.createSession({
+          userId: (user as IUserDocument)._id,
+          deviceId,
+          accessToken: tokens.accessToken,
+          refreshToken: tokens.refreshToken,
+          userAgent,
+          ipAddress,
+        });
+      }
+
       const userResponse: UserResponse = {
         id: (user as IUserDocument)._id.toString(),
         email: user.email,
@@ -115,6 +142,12 @@ export class AuthenticationService {
 
   async refresh(refreshToken: string): Promise<TokenResponse> {
     try {
+      const session =
+        await this.sessionService.validateRefreshToken(refreshToken);
+      if (!session) {
+        throw new AppException('INVALID_REFRESH_TOKEN');
+      }
+
       const payload = this.tokenService.verifyToken(refreshToken, true);
 
       const user = await this.userRepository.findById(payload.userId);
@@ -127,6 +160,10 @@ export class AuthenticationService {
         email: user.email,
         role: user.role,
       });
+      session.accessToken = tokens.accessToken;
+      session.refreshToken = tokens.refreshToken;
+      session.lastActivityAt = new Date();
+      await session.save();
 
       return tokens;
     } catch (error) {
@@ -154,17 +191,14 @@ export class AuthenticationService {
     }
   }
 
-  getMyProfileData(user: {
-    userId: string;
-    email: string;
-    role: string;
-  }): UserResponse {
-    return toDto(UserResponse, {
-      id: user.userId,
-      email: user.email,
-      role: user.role,
-      createdAt: new Date(),
-    });
+  async logout(accessToken: string): Promise<void> {
+    await this.sessionService.invalidateSession(accessToken);
+  }
+
+  async logoutAllSessions(userId: string): Promise<void> {
+    await this.sessionService.invalidateAllUserSessions(
+      new Types.ObjectId(userId),
+    );
   }
 
   private isValidPassword(password: string): boolean {

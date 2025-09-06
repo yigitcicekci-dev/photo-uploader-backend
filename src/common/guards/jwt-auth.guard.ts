@@ -8,6 +8,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { AppException } from '../exceptions/app.exception';
 import { UserRepository } from '../../user/repositories/user.repository';
+import { SessionService } from '../../authentication/services/session.service';
 import { TokenPayload } from '../../authentication/services/token.service';
 import { IUserDocument } from '../interfaces/user-document.interface';
 
@@ -31,6 +32,7 @@ export class JwtAuthGuard implements CanActivate {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly userRepository: UserRepository,
+    private readonly sessionService: SessionService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -47,6 +49,11 @@ export class JwtAuthGuard implements CanActivate {
 
     if (type !== 'Bearer') {
       throw new AppException('BAD_REQUEST');
+    }
+
+    const session = await this.sessionService.validateSession(token);
+    if (!session) {
+      throw new AppException('INVALID_TOKEN');
     }
 
     const secret: string | undefined =

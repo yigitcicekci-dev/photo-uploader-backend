@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
-import { AllExceptionsFilter } from './common/filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -14,8 +13,6 @@ async function bootstrap() {
       transform: true,
     }),
   );
-
-  app.useGlobalFilters(new AllExceptionsFilter());
 
   const config = new DocumentBuilder()
     .setTitle('Photo Uploader API')
@@ -31,6 +28,24 @@ async function bootstrap() {
       description: 'Enter JWT token',
       in: 'header',
     })
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'device-id',
+        in: 'header',
+        description: 'Unique device identifier (UUID recommended)',
+      },
+      'device-id',
+    )
+    .addApiKey(
+      {
+        type: 'apiKey',
+        name: 'accept-language',
+        in: 'header',
+        description: 'Language preference (tr or en)',
+      },
+      'accept-language',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
@@ -38,7 +53,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
-  console.log(`Application is running on: http://localhost:${port}`);
-  console.log(`Swagger documentation: http://localhost:${port}/api`);
+  console.log(`🚀 Application is running on: http://localhost:${port}`);
+  console.log(`📜 Swagger documentation: http://localhost:${port}/api`);
 }
 void bootstrap();

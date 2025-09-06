@@ -6,8 +6,8 @@ export default () => ({
   jwt: {
     accessSecret: process.env.JWT_ACCESS_SECRET,
     refreshSecret: process.env.JWT_REFRESH_SECRET,
-    accessTokenExpiration: '15m',
-    refreshTokenExpiration: '7d',
+    accessTokenExpiration: process.env.JWT_ACCESS_TOKEN_EXPIRY || '15m',
+    refreshTokenExpiration: process.env.JWT_REFRESH_TOKEN_EXPIRY || '7d',
   },
   upload: {
     dir: process.env.UPLOAD_DIR || './uploads',
