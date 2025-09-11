@@ -1,10 +1,9 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserRepository } from '../repositories/user.repository';
 import { UserDocument } from '../schemas/user.schema';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateMeUserDto } from '../dto/update-user.dto';
 import { AppException } from '../../common/exceptions/app.exception';
-import { UserErrors } from '../../common/errors/user.errors';
 import { IUserDocument } from '../../common/interfaces/user-document.interface';
 import {
   generateUniqueUsername,
