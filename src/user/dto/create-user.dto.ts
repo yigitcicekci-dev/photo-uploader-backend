@@ -23,12 +23,6 @@ export class CreateUserDto {
   @IsEmail({}, { message: 'Please provide a valid email address' })
   email: string;
 
-  @ApiProperty({ example: 'John Doe', description: 'User display name' })
-  @IsString()
-  @MinLength(3, { message: 'Display name must be at least 3 characters long' })
-  @MaxLength(64, { message: 'Display name must not exceed 64 characters' })
-  displayName?: string;
-
   @ApiProperty({ example: 'Passw0rd!', description: 'User password' })
   @IsString()
   passwordHash: string;

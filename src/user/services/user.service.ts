@@ -20,7 +20,7 @@ export class UserService {
     const existing = await this.userRepository.findByEmail(data.email);
 
     if (existing) {
-      throw new AppException(UserErrors.USER_ALREADY_EXISTS.code);
+      throw new AppException('USER_ALREADY_EXISTS');
     }
 
     if (data.username) {
@@ -28,7 +28,7 @@ export class UserService {
         data.username,
       );
       if (existingUsername) {
-        throw new AppException(UserErrors.USERNAME_ALREADY_EXISTS.code);
+        throw new AppException('USERNAME_ALREADY_EXISTS');
       }
     }
 
@@ -39,7 +39,7 @@ export class UserService {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new AppException(UserErrors.USER_NOT_FOUND.code);
+      throw new AppException('USER_NOT_FOUND');
     }
 
     return user;
@@ -55,7 +55,7 @@ export class UserService {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new AppException(UserErrors.USER_NOT_FOUND.code);
+      throw new AppException('USER_NOT_FOUND');
     }
 
     return user;
@@ -73,7 +73,7 @@ export class UserService {
         existingUsername &&
         (existingUsername as IUserDocument)._id.toString() !== id.toString()
       ) {
-        throw new AppException(UserErrors.USERNAME_ALREADY_EXISTS.code);
+        throw new AppException('USERNAME_ALREADY_EXISTS');
       }
     }
 
