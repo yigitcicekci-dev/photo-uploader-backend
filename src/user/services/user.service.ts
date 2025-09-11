@@ -14,8 +14,6 @@ import { Types } from 'mongoose';
 
 @Injectable()
 export class UserService {
-  private readonly logger = new Logger(UserService.name);
-
   constructor(private readonly userRepository: UserRepository) {}
 
   async createUser(data: CreateUserDto): Promise<UserDocument> {
