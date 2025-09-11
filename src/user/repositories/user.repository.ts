@@ -50,7 +50,6 @@ export class UserRepository {
       .exec();
   }
 
-
   async existsByEmail(email: string): Promise<boolean> {
     const user = await this.findByEmail(email);
     return !!user;
