@@ -88,20 +88,6 @@ export class UserService {
     return true;
   }
 
-  async deleteUser(id: string | Types.ObjectId): Promise<UserDocument> {
-    const user = await this.userRepository.findById(id);
-
-    if (!user) {
-      throw new AppException(UserErrors.USER_NOT_FOUND.code);
-    }
-
-    const deletedUser = await this.userRepository.delete(id);
-    if (!deletedUser) {
-      throw new AppException(UserErrors.USER_NOT_FOUND.code);
-    }
-    return deletedUser;
-  }
-
   async existsByEmail(email: string): Promise<boolean> {
     return await this.userRepository.existsByEmail(email);
   }

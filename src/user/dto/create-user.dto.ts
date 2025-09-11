@@ -46,16 +46,4 @@ export class CreateUserDto {
   @IsOptional()
   @IsString()
   language?: string;
-
-  @ApiProperty({ description: 'Whether user is enabled', default: true })
-  @IsOptional()
-  enabled?: boolean;
-
-  @ApiProperty({ description: 'Whether user is blocked', default: false })
-  @IsOptional()
-  blocked?: boolean;
-
-  @ApiProperty({ description: 'Whether user is deleted', default: false })
-  @IsOptional()
-  deleted?: boolean;
 }

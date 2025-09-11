@@ -50,13 +50,6 @@ export class UserRepository {
       .exec();
   }
 
-  async delete(id: string | Types.ObjectId): Promise<UserDocument | null> {
-    return this.userModel.findByIdAndDelete(id).exec();
-  }
-
-  async deleteById(id: string | Types.ObjectId): Promise<UserDocument | null> {
-    return this.userModel.findByIdAndDelete(id).exec();
-  }
 
   async existsByEmail(email: string): Promise<boolean> {
     const user = await this.findByEmail(email);
