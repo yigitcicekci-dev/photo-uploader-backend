@@ -1,4 +1,4 @@
-# Photo Uploader Backend - Yiğit Çiçekci
+# Photo Uploader Backend
 
 A professional REST API for photo uploading with authentication, authorization, and media management built with NestJS.
 
