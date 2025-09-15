@@ -1,7 +1,5 @@
 # Photo Uploader Backend
 
-A professional REST API for photo uploading with authentication, authorization, and media management built with NestJS.
-
 ## Features
 
 - **Authentication & Authorization**: JWT-based authentication with access and refresh tokens
